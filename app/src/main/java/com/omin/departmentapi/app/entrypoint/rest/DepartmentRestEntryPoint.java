@@ -9,6 +9,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,9 +42,9 @@ class DepartmentRestEntryPoint implements DepartmentEntryPoint {
 	
 	@GetMapping
 	@Override
-	public List<DepartmentResponse> findAll() {
+	public List<DepartmentResponse> findAll(@SortDefault(sort = CODE) Sort sort) {
 		return departmentUseCase
-				.findAll(Sort.by(CODE))
+				.findAll(sort)
 				.stream()
 				.map(departmentMapper::toResponse)
 				.collect(Collectors.toList());

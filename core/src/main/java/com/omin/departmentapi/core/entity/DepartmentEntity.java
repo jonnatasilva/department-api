@@ -45,9 +45,8 @@ public class DepartmentEntity implements Serializable {
 	
 	private Boolean enabled = Boolean.TRUE;
 	
-	public DepartmentEntity disable() {
+	public void disable() {
 		this.enabled = Boolean.FALSE;
-		return this;
 	}
 	
 	public void copy(DepartmentEntity from) {
