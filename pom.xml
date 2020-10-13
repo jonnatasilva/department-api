@@ -52,8 +52,9 @@
 	</dependencies>
 
 	<modules>
-		<module>core</module>
-		<module>app</module>
+		<module>domain</module>
+		<module>usecase</module>
 		<module>configuration</module>
+		<module>adapter</module>
 	</modules>
 </project>
