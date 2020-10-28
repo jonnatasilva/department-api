@@ -2,18 +2,17 @@ package com.omin.departmentapi.usecase;
 
 import java.util.List;
 
-import org.springframework.data.domain.Sort;
+import javax.validation.Valid;
 
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
 
 public interface DepartmentUseCase {
 	
-	List<DepartmentEntity> findAll(Sort sort);
+	List<DepartmentEntity> findAll();
 	DepartmentEntity findByCode(Long code);
 	
-	DepartmentEntity create(DepartmentEntity entity);
-	DepartmentEntity update(Long code, DepartmentEntity entity);
+	DepartmentEntity create(@Valid DepartmentEntity entity);
+	DepartmentEntity update(Long code, @Valid DepartmentEntity entity);
 	
 	DepartmentEntity delete(Long code);
-	
 }

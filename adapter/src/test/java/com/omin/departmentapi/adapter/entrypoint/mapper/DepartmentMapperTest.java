@@ -5,19 +5,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 
 import com.omin.departmentapi.adapter.entrypoint.response.DepartmentResponse;
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
-import com.omni.departmentapi.domain.entity.vo.BoardEnum;
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
+import com.omin.departmentapi.domain.entity.vo.BoardEnum;
 
 public class DepartmentMapperTest {
 	
-	public static final long ONE = 1L;
+	private static final long CODE_ONE = 1L;
+	private static final String DEPARTMENT_ONE_NAME = "Department " + CODE_ONE;
+	private static final String DEPARTMENT_ONE_ADDRESS = "address";
+	private static final String DEPARTMENT_CITY = "city";
+	private static final String DEPARTMENT_STATE = "state";
+	private static final Boolean DEPARTMENT_ENABLED = Boolean.TRUE;
 
+
+	
 	private DepartmentMapper departmentMapper = new DepartmentMapper();
 	
 	@Test
 	public void shouldMapEntityToResponse() {
 		//given
-		DepartmentEntity entity = createADepartmentEntity();
+		com.omin.departmentapi.domain.entity.DepartmentEntity entity = createDepartmentOne();
 		
 		//when
 		DepartmentResponse response =  departmentMapper.toResponse(entity);
@@ -32,16 +39,14 @@ public class DepartmentMapperTest {
 		assertThat(response.getEnabled()).isEqualTo(entity.getEnabled());
 	}
 	
-	private DepartmentEntity createADepartmentEntity() {
-		DepartmentEntity department = new DepartmentEntity();
-		department.setCode(1L);
-		department.setName("Department " + ONE);
-		department.setAddress("address");
-		department.setCity("city");
-		department.setState("state");
-		department.setBoard(BoardEnum.EIS);
-		department.setEnabled(Boolean.TRUE);
-		department.setBoard(BoardEnum.NEGOCIOS);
-		return department;
+	private DepartmentEntity createDepartmentOne() {
+		return new DepartmentEntity(
+				CODE_ONE,
+				DEPARTMENT_ONE_NAME,
+				DEPARTMENT_ONE_ADDRESS,
+				DEPARTMENT_CITY,
+				DEPARTMENT_STATE,
+				BoardEnum.EIS,
+				DEPARTMENT_ENABLED);
 	}
 }

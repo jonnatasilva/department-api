@@ -15,10 +15,10 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.domain.Sort;
 
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
-import com.omni.departmentapi.domain.port.DepartmentRepository;
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
+import com.omin.departmentapi.domain.entity.vo.BoardEnum;
+import com.omin.departmentapi.domain.port.DepartmentRepositoryFacade;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DepartmentUseCaseTest {
@@ -28,11 +28,14 @@ public class DepartmentUseCaseTest {
 	private static final int ONE_HANDRED = 100;
 
 	private static final long CODE_ONE = 1L;
-
-	private static final Sort SORT_BY_CODE = Sort.by("code");
+	private static final String DEPARTMENT_ONE_NAME = "Department " + CODE_ONE;
+	private static final String DEPARTMENT_ONE_ADDRESS = "address";
+	private static final String DEPARTMENT_CITY = "city";
+	private static final String DEPARTMENT_STATE = "state";
+	private static final Boolean DEPARTMENT_ENABLED = Boolean.TRUE;
 
 	@Mock
-	private DepartmentRepository departmentRepository;
+	private DepartmentRepositoryFacade departmentRepository;
 	
 	@InjectMocks
 	private DepartmentUseCaseImpl departmentUseCase;
@@ -46,10 +49,10 @@ public class DepartmentUseCaseTest {
 	public void shouldFindAllDepartments() {
 		//given
 		List<DepartmentEntity> departments = generateDepartments(ONE_HANDRED);
-		given(departmentRepository.findAll(SORT_BY_CODE)).willReturn(departments);
+		given(departmentRepository.findAll(DepartmentUseCaseImpl.SORT_BY_CODE)).willReturn(departments);
 		
 		//when
-		List<DepartmentEntity> result = departmentUseCase.findAll(SORT_BY_CODE);
+		List<DepartmentEntity> result = departmentUseCase.findAll();
 		
 		//then
 		assertThat(result).containsExactlyElementsOf(departments);
@@ -58,10 +61,10 @@ public class DepartmentUseCaseTest {
 	@Test
 	public void shouldFindAEmptyListOfDepartments() {
 		//given
-		given(departmentRepository.findAll(SORT_BY_CODE)).willReturn(Collections.emptyList());
+		given(departmentRepository.findAll(DepartmentUseCaseImpl.SORT_BY_CODE)).willReturn(Collections.emptyList());
 		
 		//when
-		List<DepartmentEntity> result = departmentUseCase.findAll(SORT_BY_CODE);
+		List<DepartmentEntity> result = departmentUseCase.findAll();
 		
 		//then
 		assertThat(result).isEmpty();
@@ -92,24 +95,23 @@ public class DepartmentUseCaseTest {
 	@Test
 	public void shouldCreateANewDepartment() {
 		//given
-		DepartmentEntity entity = new DepartmentEntity();
+		DepartmentEntity entity = createDepartmentOne();
 
-		DepartmentEntity entityCreated = new DepartmentEntity();
-		entityCreated.setCode(CODE_ONE);
-		given(departmentRepository.save(entity)).willReturn(entityCreated);
+		given(departmentRepository.save(entity)).willReturn(entity);
 		
 		//when
 		DepartmentEntity result = departmentUseCase.create(entity);
 		
 		//then
-		assertThat(result).isEqualTo(entityCreated);
+		assertThat(result).isEqualTo(entity);
 	}
 	
 	@Test
 	public void shouldDeleteTheDepartment() {
 		//given
-		DepartmentEntity department = generateDepartments(ONE).get(ZERO);
+		DepartmentEntity department = createDepartmentOne();
 		given(departmentRepository.findById(CODE_ONE)).willReturn(Optional.of(department));
+		given(departmentRepository.save(department)).willReturn(department);
 		
 		//when
 		DepartmentEntity result = departmentUseCase.delete(CODE_ONE);
@@ -134,9 +136,7 @@ public class DepartmentUseCaseTest {
 		given(departmentRepository.findById(CODE_ONE)).willReturn(Optional.of(department));
 		
 		
-		DepartmentEntity departmentUpdated = new DepartmentEntity();
-		departmentUpdated.setCode(CODE_ONE);
-		departmentUpdated.setName("Teste Updated");
+		DepartmentEntity departmentUpdated = createDepartment(CODE_ONE, "Teste Updated");
 		
 		given(departmentRepository.save(departmentUpdated)).willReturn(departmentUpdated);
 		
@@ -153,9 +153,7 @@ public class DepartmentUseCaseTest {
 		given(departmentRepository.findById(CODE_ONE)).willReturn(Optional.empty());
 		
 		
-		DepartmentEntity departmentUpdated = new DepartmentEntity();
-		departmentUpdated.setCode(CODE_ONE);
-		departmentUpdated.setName("Teste Updated");
+		DepartmentEntity departmentUpdated = createDepartment(CODE_ONE, "Teste Updated");
 		
 		//when
 		departmentUseCase.update(CODE_ONE, departmentUpdated);
@@ -164,14 +162,27 @@ public class DepartmentUseCaseTest {
 	private List<DepartmentEntity> generateDepartments(int numberOfElements) {
 		List<DepartmentEntity> departments = new ArrayList<>();
 		for (int code = 1; code <= numberOfElements; code++) {
-			departments.add(createADepartment(code));
+			departments.add(createDepartment(code));
 		}
 		return departments;
 	}
 
-	private DepartmentEntity createADepartment(int code) {
-		DepartmentEntity department = new DepartmentEntity();
-		department.setCode((long) code);
-		return department;
+	private DepartmentEntity createDepartment(long code) {
+		return createDepartment(code, DEPARTMENT_ONE_NAME);
+	}
+	
+	private DepartmentEntity createDepartment(long code, String name) {
+		return new DepartmentEntity(
+				(long) code,
+				name,
+				DEPARTMENT_ONE_ADDRESS,
+				DEPARTMENT_CITY,
+				DEPARTMENT_STATE,
+				BoardEnum.EIS,
+				DEPARTMENT_ENABLED);
+	}
+	
+	private DepartmentEntity createDepartmentOne() {
+		return createDepartment(CODE_ONE);
 	}
 }

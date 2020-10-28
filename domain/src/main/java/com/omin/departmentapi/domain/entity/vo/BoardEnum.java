@@ -1,4 +1,4 @@
-package com.omni.departmentapi.domain.entity.vo;
+package com.omin.departmentapi.domain.entity.vo;
 
 import lombok.Getter;
 

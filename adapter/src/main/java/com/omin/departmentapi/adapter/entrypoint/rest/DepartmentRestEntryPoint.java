@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,16 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.omin.departmentapi.adapter.entrypoint.DepartmentEntryPoint;
 import com.omin.departmentapi.adapter.entrypoint.mapper.DepartmentMapper;
+import com.omin.departmentapi.adapter.entrypoint.request.DepartmentRequest;
 import com.omin.departmentapi.adapter.entrypoint.response.DepartmentResponse;
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
 import com.omin.departmentapi.usecase.DepartmentUseCase;
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
 
 @CrossOrigin("*")
 @RestController
 @RequestMapping("/departments")
 class DepartmentRestEntryPoint implements DepartmentEntryPoint {
-
-	private static final String CODE = "code";
 
 	@Autowired
 	private DepartmentUseCase departmentUseCase;
@@ -42,9 +39,9 @@ class DepartmentRestEntryPoint implements DepartmentEntryPoint {
 	
 	@GetMapping
 	@Override
-	public List<DepartmentResponse> findAll(@SortDefault(sort = CODE) Sort sort) {
+	public List<DepartmentResponse> findAll() {
 		return departmentUseCase
-				.findAll(sort)
+				.findAll()
 				.stream()
 				.map(departmentMapper::toResponse)
 				.collect(Collectors.toList());
@@ -59,8 +56,8 @@ class DepartmentRestEntryPoint implements DepartmentEntryPoint {
 	
 	@PostMapping
 	@Override
-	public ResponseEntity<DepartmentResponse> create(@Valid @RequestBody DepartmentEntity entity) throws URISyntaxException {
-		DepartmentEntity department = departmentUseCase.create(entity);
+	public ResponseEntity<DepartmentResponse> create(@Valid @RequestBody DepartmentRequest request) throws URISyntaxException {
+		DepartmentEntity department = departmentUseCase.create(departmentMapper.toEntity(request));
 		
 		return ResponseEntity
 				.created(new URI("/departments/" + department.getCode()))
@@ -69,8 +66,8 @@ class DepartmentRestEntryPoint implements DepartmentEntryPoint {
 	
 	@PutMapping("/{code}")
 	@Override
-	public DepartmentResponse update(@PathVariable Long code, @Valid @RequestBody DepartmentEntity entity) {
-		DepartmentEntity department = departmentUseCase.update(code, entity);
+	public DepartmentResponse update(@PathVariable Long code, @Valid @RequestBody DepartmentRequest request) {
+		DepartmentEntity department = departmentUseCase.update(code, departmentMapper.toEntity(request));
 		return departmentMapper.toResponse(department);
 	}
 	

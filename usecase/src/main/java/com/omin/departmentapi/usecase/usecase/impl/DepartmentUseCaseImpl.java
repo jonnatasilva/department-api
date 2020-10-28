@@ -2,26 +2,25 @@ package com.omin.departmentapi.usecase.usecase.impl;
 
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.persistence.EntityNotFoundException;
-import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
+import com.omin.departmentapi.domain.port.DepartmentRepositoryFacade;
 import com.omin.departmentapi.usecase.DepartmentUseCase;
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
-import com.omni.departmentapi.domain.port.DepartmentRepository;
 
-@Service
+@Named
 class DepartmentUseCaseImpl implements DepartmentUseCase {
 	
-	//@Autowired
-	private DepartmentRepository departmentRepository; 
+	static final String SORT_BY_CODE = "code";
+	
+	@Inject
+	private DepartmentRepositoryFacade departmentRepository; 
 	
 	@Override
-	public List<DepartmentEntity> findAll(Sort sort) {
-		return departmentRepository.findAll(sort);
+	public List<DepartmentEntity> findAll() {
+		return departmentRepository.findAll(SORT_BY_CODE);
 	}
 	
 	@Override
@@ -37,11 +36,11 @@ class DepartmentUseCaseImpl implements DepartmentUseCase {
 	}
 
 	@Override
-	@Transactional
 	public DepartmentEntity delete(Long code) {
 		DepartmentEntity entity = findByCode(code);
 		entity.disable();
-		return entity;
+		
+		return create(entity);
 	}
 	
 	@Override

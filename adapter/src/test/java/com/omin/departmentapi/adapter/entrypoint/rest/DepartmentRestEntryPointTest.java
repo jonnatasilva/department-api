@@ -14,6 +14,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,19 +32,25 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omin.departmentapi.adapter.entrypoint.mapper.DepartmentMapper;
+import com.omin.departmentapi.adapter.entrypoint.request.DepartmentRequest;
 import com.omin.departmentapi.adapter.entrypoint.response.DepartmentResponse;
+import com.omin.departmentapi.domain.entity.DepartmentEntity;
+import com.omin.departmentapi.domain.entity.vo.BoardEnum;
 import com.omin.departmentapi.usecase.DepartmentUseCase;
-import com.omni.departmentapi.domain.entity.DepartmentEntity;
-import com.omni.departmentapi.domain.entity.vo.BoardEnum;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DepartmentRestEntryPointTest {
 	
 	private static final int ONE_HUNDRED = 100;
-	private static final Long CODE_ONE = 1L;
-
-	private static final Sort SORT_BY_CODE = Sort.by("code");
 	
+	private static final long CODE_ONE = 1L;
+	private static final String DEPARTMENT_ONE_NAME = "Department " + CODE_ONE;
+	private static final String DEPARTMENT_ONE_ADDRESS = "address";
+	private static final String DEPARTMENT_CITY = "city";
+	private static final String DEPARTMENT_STATE = "state";
+	private static final Boolean DEPARTMENT_ENABLED = Boolean.TRUE;
+
+
 	private MockMvc mockMvc;
 	
 	@Mock
@@ -59,7 +65,7 @@ public class DepartmentRestEntryPointTest {
 	private JacksonTester<List<DepartmentResponse>> departmentsResponseTester;
 	
 	private JacksonTester<DepartmentResponse> departmentResponseTester;
-	private JacksonTester<DepartmentEntity> departmentEntityTester;
+	private JacksonTester<DepartmentRequest> departmentEntityTester;
 	
 	@Before
 	public void before() {
@@ -74,9 +80,11 @@ public class DepartmentRestEntryPointTest {
 	@Test
 	public void shouldFindAll() throws Exception {
 		//given
-		List<DepartmentEntity> departments = generateDepartments(ONE_HUNDRED);
+		List<DepartmentRequest> departmentsRequest = generateDepartments(ONE_HUNDRED);
 		
-		given(departmentUseCase.findAll(SORT_BY_CODE)).willReturn(departments);
+		List<DepartmentEntity> entities = toEntities(departmentsRequest);
+		
+		given(departmentUseCase.findAll()).willReturn(entities);
 		
 		//when
 		ResultActions result = mockMvc.perform(get("/departments"));
@@ -91,9 +99,11 @@ public class DepartmentRestEntryPointTest {
 	@Test
 	public void shouldADepartmentByCode() throws Exception {
 		//given
-		DepartmentEntity department = generateDepartments(ONE_HUNDRED).get(0);
+		DepartmentRequest department = generateDepartments(ONE_HUNDRED).get(0);
 		
-		given(departmentUseCase.findByCode(1L)).willReturn(department);
+		DepartmentEntity entity = departmentMapper.toEntity(department);
+		
+		given(departmentUseCase.findByCode(1L)).willReturn(entity);
 		
 		//when
 		ResultActions result = mockMvc.perform(get("/departments/1"));
@@ -109,15 +119,16 @@ public class DepartmentRestEntryPointTest {
 	@Test
 	public void shouldCreateANewDepartment() throws Exception {
 		//given
-		DepartmentEntity entity = generateDepartments(ONE_HUNDRED).get(0);
-		
+		DepartmentRequest request = generateDepartments(ONE_HUNDRED).get(0);
+		DepartmentEntity entity = departmentMapper.toEntity(request);
+
 		given(departmentUseCase.create(entity)).willReturn(entity);
 		
 		//when
 		ResultActions result = mockMvc
 				.perform(post("/departments")
 						.contentType(MediaType.APPLICATION_JSON_VALUE)
-						.content(departmentEntityTester.write(entity).getJson()));
+						.content(departmentEntityTester.write(request).getJson()));
 		
 		//then
 		result.andExpect(status().isCreated());
@@ -131,15 +142,16 @@ public class DepartmentRestEntryPointTest {
 	@Test
 	public void shouldUpdateADepartment() throws Exception {
 		//given
-		DepartmentEntity entity = generateDepartments(ONE_HUNDRED).get(0);
-		
+		DepartmentRequest request = generateDepartments(ONE_HUNDRED).get(0);
+		DepartmentEntity entity = departmentMapper.toEntity(request);
+
 		given(departmentUseCase.update(CODE_ONE, entity)).willReturn(entity);
 		
 		//when
 		ResultActions result = mockMvc
 				.perform(put("/departments/1")
 						.contentType(MediaType.APPLICATION_JSON_VALUE)
-						.content(departmentEntityTester.write(entity).getJson()));
+						.content(departmentEntityTester.write(request).getJson()));
 		
 		//then
 		result.andExpect(status().isOk());
@@ -153,8 +165,9 @@ public class DepartmentRestEntryPointTest {
 	@Test
 	public void shouldDADepartment() throws Exception {
 		//given
-		DepartmentEntity entity = generateDepartments(ONE_HUNDRED).get(0);
-
+		DepartmentRequest request = generateDepartments(ONE_HUNDRED).get(0);
+		DepartmentEntity entity = departmentMapper.toEntity(request);
+		
 		given(departmentUseCase.delete(CODE_ONE)).willReturn(entity);
 		
 		//when
@@ -168,27 +181,14 @@ public class DepartmentRestEntryPointTest {
 		assertThat(body).isEqualTo(departmentMapper.toResponse(entity));
 	}
 	
-	private List<DepartmentEntity> generateDepartments(int numberOfElements) {
-		List<DepartmentEntity> departments = new ArrayList<>();
+	private List<DepartmentRequest> generateDepartments(int numberOfElements) {
+		List<DepartmentRequest> departments = new ArrayList<>(numberOfElements);
 		for (int code = 1; code <= numberOfElements; code++) {
-			departments.add(createADepartment(code));
+			departments.add(createDepartment(code));
 		}
 		return departments;
 	}
 
-	private DepartmentEntity createADepartment(int code) {
-		DepartmentEntity department = new DepartmentEntity();
-		department.setCode((long) code);
-		department.setName("Department " + code);
-		department.setAddress("address");
-		department.setCity("city");
-		department.setState("state");
-		department.setBoard(BoardEnum.EIS);
-		department.setEnabled(Boolean.TRUE);
-		department.setBoard(BoardEnum.NEGOCIOS);
-		return department;
-	}
-	
 	private DepartmentResponse extractResponse(ResultActions result) throws UnsupportedEncodingException, IOException {
 		String bodyAsString = result.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 		return departmentResponseTester.parseObject(bodyAsString);
@@ -198,5 +198,23 @@ public class DepartmentRestEntryPointTest {
 		String bodyAsString = result.andReturn().getResponse().getContentAsString();
 		List<DepartmentResponse> body = departmentsResponseTester.parseObject(bodyAsString);
 		return body;
+	}
+	
+	private DepartmentRequest createDepartment(long code) {
+		return new DepartmentRequest(
+				code,
+				DEPARTMENT_ONE_NAME,
+				DEPARTMENT_ONE_ADDRESS,
+				DEPARTMENT_CITY,
+				DEPARTMENT_STATE,
+				BoardEnum.EIS.toString(),
+				DEPARTMENT_ENABLED);
+	}
+	
+	private List<DepartmentEntity> toEntities(List<DepartmentRequest> departmentsRequest) {
+		return departmentsRequest
+				.stream()
+				.map(departmentMapper::toEntity)
+				.collect(Collectors.toList());
 	}
 }
